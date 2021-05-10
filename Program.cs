@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Linq;
 
 namespace TCPserver
 {
@@ -43,9 +44,19 @@ namespace TCPserver
                     Console.WriteLine($"Gracz: {e.IpPort} stworzył nową gre");
                     break;
                 case Messages.Client.Join:
-                    matches[0].playerBlack = e.IpPort;
-                    server.Send(matches[0].playerWhite, Messages.Server.Start + ":WHITE");
-                    server.Send(matches[0].playerBlack, Messages.Server.Start + ":BLACK");
+
+                    string hostAdress = Encoding.UTF8.GetString(e.Data).Split(':')[1] + Encoding.UTF8.GetString(e.Data).Split(':')[2];
+                    foreach (Match match in matches)
+                    {
+                        if (match.playerWhite.Equals(hostAdress))
+                        {
+                            match.playerBlack = e.IpPort;
+                            server.Send(match.playerWhite, Messages.Server.Start + ":WHITE");
+                            server.Send(match.playerBlack, Messages.Server.Start + ":BLACK");
+                            Console.WriteLine("Mecz wystartował");
+                            break;
+                        }
+                    }
                     break;
                 case Messages.Client.Move:
                     if(e.IpPort == matches[0].playerWhite)
@@ -57,6 +68,13 @@ namespace TCPserver
                         server.Send(matches[0].playerWhite, Encoding.UTF8.GetString(e.Data));
                     }                  
                     break;
+                case Messages.Server.Matches:
+                    Console.WriteLine(listOfMatches());
+                    server.Send(e.IpPort, listOfMatches());
+                    break;
+                case Messages.Client.Cancel:
+                    matches.RemoveAll(x => x.playerWhite == e.IpPort);
+                    break;
                 default:
                     break;
             }
@@ -65,6 +83,7 @@ namespace TCPserver
         private static void Events_ClientDisconnected(object sender, ClientDisconnectedEventArgs e)
         {
             Console.WriteLine($"Client disconnected {e.IpPort}");
+            matches.RemoveAll(x => x.playerWhite == e.IpPort);
             connectedClients.Remove(e.IpPort);       
         }
 
@@ -73,6 +92,19 @@ namespace TCPserver
             Console.WriteLine($"New client connected {e.IpPort}");
             server.Send(e.IpPort, "Witaj");
             connectedClients.Add(e.IpPort);           
+        }
+
+        private static string listOfMatches()
+        {
+            StringBuilder listOfMatches = new StringBuilder();
+            listOfMatches.Append(Messages.Server.Matches);
+
+            foreach(Match match in matches)
+            {
+                listOfMatches.Append($":{match.playerWhite}");
+            }
+
+            return listOfMatches.ToString();
         }
     }
 }
