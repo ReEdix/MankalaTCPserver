@@ -45,7 +45,8 @@ namespace TCPserver
                     break;
                 case Messages.Client.Join:
 
-                    string hostAdress = Encoding.UTF8.GetString(e.Data).Split(':')[1] + Encoding.UTF8.GetString(e.Data).Split(':')[2];
+                    string hostAdress = $"{Encoding.UTF8.GetString(e.Data).Split(':')[1]}:{Encoding.UTF8.GetString(e.Data).Split(':')[2]}";
+
                     foreach (Match match in matches)
                     {
                         if (match.playerWhite.Equals(hostAdress))
@@ -59,13 +60,19 @@ namespace TCPserver
                     }
                     break;
                 case Messages.Client.Move:
-                    if(e.IpPort == matches[0].playerWhite)
+                    Match ourMatch = matches.Find(x => x.playerBlack == e.IpPort);
+                    if(ourMatch == null)
                     {
-                        server.Send(matches[0].playerBlack, Encoding.UTF8.GetString(e.Data));
+                        ourMatch = matches.Find(x => x.playerWhite == e.IpPort);
+                    }
+
+                    if(e.IpPort == ourMatch.playerWhite)
+                    {
+                        server.Send(ourMatch.playerBlack, Encoding.UTF8.GetString(e.Data));
                     }
                     else
                     {
-                        server.Send(matches[0].playerWhite, Encoding.UTF8.GetString(e.Data));
+                        server.Send(ourMatch.playerWhite, Encoding.UTF8.GetString(e.Data));
                     }                  
                     break;
                 case Messages.Server.Matches:
@@ -101,7 +108,10 @@ namespace TCPserver
 
             foreach(Match match in matches)
             {
-                listOfMatches.Append($":{match.playerWhite}");
+                if (match.playerBlack == null)
+                {
+                    listOfMatches.Append($":{match.playerWhite}");
+                }
             }
 
             return listOfMatches.ToString();
