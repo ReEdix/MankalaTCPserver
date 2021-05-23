@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?><Database Name="databaseM" Class="MankalaDBDataContext" xmlns="http://schemas.microsoft.com/linqtosql/dbml/2007">
+  <Table Name="dbo.Game" Member="Games">
+    <Type Name="Game">
+      <Column Name="Id" Type="System.Int32" DbType="Int NOT NULL IDENTITY" IsPrimaryKey="true" IsDbGenerated="true" CanBeNull="false" />
+      <Column Name="player1" Type="System.Int32" DbType="Int" CanBeNull="true" />
+      <Column Name="player2" Type="System.Int32" DbType="Int" CanBeNull="true" />
+      <Column Name="winner" Type="System.Int32" DbType="Int" CanBeNull="true" />
+      <Association Name="User_Game" Member="User" ThisKey="player1" OtherKey="Id" Type="User" IsForeignKey="true" />
+      <Association Name="User_Game1" Member="User1" ThisKey="player2" OtherKey="Id" Type="User" IsForeignKey="true" />
+      <Association Name="User_Game2" Member="User2" ThisKey="winner" OtherKey="Id" Type="User" IsForeignKey="true" />
+    </Type>
+  </Table>
+  <Table Name="dbo.[User]" Member="Users">
+    <Type Name="User">
+      <Column Name="Id" Type="System.Int32" DbType="Int NOT NULL IDENTITY" IsPrimaryKey="true" IsDbGenerated="true" CanBeNull="false" />
+      <Column Name="name" Type="System.String" DbType="VarChar(15) NOT NULL" CanBeNull="false" />
+      <Column Name="password" Type="System.String" DbType="VarChar(15) NOT NULL" CanBeNull="false" />
+      <Association Name="User_Game" Member="Games" ThisKey="Id" OtherKey="player1" Type="Game" />
+      <Association Name="User_Game1" Member="Games1" ThisKey="Id" OtherKey="player2" Type="Game" />
+      <Association Name="User_Game2" Member="Games2" ThisKey="Id" OtherKey="winner" Type="Game" />
+    </Type>
+  </Table>
+</Database>
