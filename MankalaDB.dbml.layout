@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ordesignerObjectsDiagram dslVersion="1.0.0.0" absoluteBounds="0, 0, 11, 8.5" name="MankalaDB">
+  <DataContextMoniker Name="/MankalaDBDataContext" />
+  <nestedChildShapes>
+    <classShape Id="1fd69f00-931c-4577-806f-5fea58c17c26" absoluteBounds="1.75, 1.25, 2, 1.5785953776041666">
+      <DataClassMoniker Name="/MankalaDBDataContext/Game" />
+      <nestedChildShapes>
+        <elementListCompartment Id="ec0b9724-d3ca-4321-9c43-62e77f6b7af9" absoluteBounds="1.7650000000000001, 1.71, 1.9700000000000002, 1.0185953776041665" name="DataPropertiesCompartment" titleTextColor="Black" itemTextColor="Black" />
+      </nestedChildShapes>
+    </classShape>
+    <classShape Id="6a9701b1-2bcb-43f0-95b8-91d5f5211b24" absoluteBounds="4.625, 1.375, 2, 1.3862939453125">
+      <DataClassMoniker Name="/MankalaDBDataContext/User" />
+      <nestedChildShapes>
+        <elementListCompartment Id="011c3c5f-c842-4449-8898-82b37e7a6ca5" absoluteBounds="4.64, 1.835, 1.9700000000000002, 0.8262939453125" name="DataPropertiesCompartment" titleTextColor="Black" itemTextColor="Black" />
+      </nestedChildShapes>
+    </classShape>
+    <associationConnector edgePoints="[(4.625 : 2.06814697265625); (3.75 : 2.06814697265625)]" fixedFrom="Algorithm" fixedTo="Algorithm">
+      <AssociationMoniker Name="/MankalaDBDataContext/User/User_Game" />
+      <nodes>
+        <classShapeMoniker Id="6a9701b1-2bcb-43f0-95b8-91d5f5211b24" />
+        <classShapeMoniker Id="1fd69f00-931c-4577-806f-5fea58c17c26" />
+      </nodes>
+    </associationConnector>
+    <associationConnector edgePoints="[(4.625 : 1.65907348632813); (3.75 : 1.65907348632813)]" fixedFrom="Algorithm" fixedTo="Algorithm">
+      <AssociationMoniker Name="/MankalaDBDataContext/User/User_Game1" />
+      <nodes>
+        <classShapeMoniker Id="6a9701b1-2bcb-43f0-95b8-91d5f5211b24" />
+        <classShapeMoniker Id="1fd69f00-931c-4577-806f-5fea58c17c26" />
+      </nodes>
+    </associationConnector>
+    <associationConnector edgePoints="[(4.625 : 2.47722045898438); (3.75 : 2.47722045898438)]" fixedFrom="Algorithm" fixedTo="Algorithm">
+      <AssociationMoniker Name="/MankalaDBDataContext/User/User_Game2" />
+      <nodes>
+        <classShapeMoniker Id="6a9701b1-2bcb-43f0-95b8-91d5f5211b24" />
+        <classShapeMoniker Id="1fd69f00-931c-4577-806f-5fea58c17c26" />
+      </nodes>
+    </associationConnector>
+  </nestedChildShapes>
+</ordesignerObjectsDiagram>
