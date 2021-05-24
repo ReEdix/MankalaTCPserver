@@ -34,5 +34,16 @@ namespace TCPserver.Properties {
                 return ((string)(this["databaseMConnectionString"]));
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.ConnectionString)]
+        [global::System.Configuration.DefaultSettingValueAttribute("Data Source=(LocalDB)\\MSSQLLocalDB;AttachDbFilename=|DataDirectory|\\databaseM.mdf" +
+            ";Integrated Security=True")]
+        public string databaseConnection {
+            get {
+                return ((string)(this["databaseConnection"]));
+            }
+        }
     }
 }

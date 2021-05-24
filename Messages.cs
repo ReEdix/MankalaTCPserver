@@ -18,6 +18,8 @@
             public const string Join = "###__Join";
             public const string Move = "###__Move";
             public const string Exit = "###__Exit";
+            public const string Login = "###__Login";
+            public const string Register = "###__Register";
         }
     }
 }

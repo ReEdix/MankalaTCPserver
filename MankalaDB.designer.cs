@@ -77,6 +77,11 @@ namespace TCPserver
 				return this.GetTable<User>();
 			}
 		}
+
+		public bool userLogin(string nick, string password)
+        {
+			return Users.Any(x => ( x.name.Equals(nick) && x.password.Equals(password) ));			
+        }
 	}
 	
 	[global::System.Data.Linq.Mapping.TableAttribute(Name="dbo.Game")]

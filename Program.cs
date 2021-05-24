@@ -11,9 +11,9 @@ namespace TCPserver
         public static List<String> connectedClients = new List<string>();
         public static List<Match> matches = new List<Match>();
         static SimpleTcpServer server = new SimpleTcpServer("127.0.0.1:8001");
+        public static MankalaDBDataContext db = new MankalaDBDataContext(@"Data Source = (LocalDB)\MSSQLLocalDB; AttachDbFilename = C:\Users\ReEdix\source\repos\TCPserver\databaseM.mdf; Integrated Security = True");
         static void Main(string[] args)
-        {          
-            
+        {         
             server.Events.ClientConnected += Events_ClientConnected;
             server.Events.ClientDisconnected += Events_ClientDisconnected;
             server.Events.DataReceived += Events_DataReceived;
@@ -37,7 +37,9 @@ namespace TCPserver
         {
             Console.WriteLine($"Dane od clienta: {e.IpPort} -> {Encoding.UTF8.GetString(e.Data)}");
 
-            switch(Encoding.UTF8.GetString(e.Data).Split(':')[0])
+            String[] messageData = Encoding.UTF8.GetString(e.Data).Split(':');
+
+            switch (messageData[0])
             {
                 case Messages.Client.Host:
                     matches.Add(new Match(e.IpPort));
@@ -45,7 +47,7 @@ namespace TCPserver
                     break;
                 case Messages.Client.Join:
 
-                    string hostAdress = $"{Encoding.UTF8.GetString(e.Data).Split(':')[1]}:{Encoding.UTF8.GetString(e.Data).Split(':')[2]}";
+                    string hostAdress = $"{messageData[1]}:{messageData[2]}";
 
                     foreach (Match match in matches)
                     {
@@ -82,6 +84,17 @@ namespace TCPserver
                 case Messages.Client.Cancel:
                     matches.RemoveAll(x => x.playerWhite == e.IpPort);
                     break;
+                case Messages.Client.Login:
+                    if(!db.userLogin(messageData[1], messageData[2]))
+                    {
+                        server.Send(e.IpPort, Messages.Server.Disconnect);
+                    }
+
+                    break;
+                case Messages.Client.Register:
+                    addUser(Encoding.UTF8.GetString(e.Data));
+                    server.Send(e.IpPort, Messages.Server.Disconnect);
+                    break;
                 default:
                     break;
             }
@@ -115,6 +128,30 @@ namespace TCPserver
             }
 
             return listOfMatches.ToString();
+        }
+
+        private static void addUser(String playerData)
+        {
+
+            //name;password
+            User newUser = new User();
+
+            String[] substring = playerData.Split(':');
+            newUser.name = substring[1];
+            newUser.password = substring[2];
+
+
+
+            db.Users.InsertOnSubmit(newUser);
+            try
+            {
+                db.SubmitChanges();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Can't submit changes in database - user");
+                Console.WriteLine(e.Message);
+            }
         }
     }
 }
