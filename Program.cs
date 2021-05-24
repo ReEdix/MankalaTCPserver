@@ -8,7 +8,7 @@ namespace TCPserver
 {
     class Program
     {
-        public static List<String> connectedClients = new List<string>();
+        public static List<Player> connectedClients = new List<Player>();
         public static List<Match> matches = new List<Match>();
         static SimpleTcpServer server = new SimpleTcpServer("127.0.0.1:8001");
         public static MankalaDBDataContext db = new MankalaDBDataContext(@"Data Source = (LocalDB)\MSSQLLocalDB; AttachDbFilename = C:\Users\ReEdix\source\repos\TCPserver\databaseM.mdf; Integrated Security = True");
@@ -25,9 +25,9 @@ namespace TCPserver
             {
                 if(commandLine.Equals("CLIENTS"))
                 {
-                    foreach(string client in connectedClients)
+                    foreach(Player client in connectedClients)
                     {
-                        Console.WriteLine(client);
+                        Console.WriteLine(client.name);
                     }
                 }
             }
@@ -88,7 +88,14 @@ namespace TCPserver
                     if(!db.userLogin(messageData[1], messageData[2]))
                     {
                         server.Send(e.IpPort, Messages.Server.Disconnect);
+                        break;
                     }
+
+                    if(connectedClients.Exists(x => x.name == messageData[1]))
+                    {
+                        server.Send(e.IpPort, Messages.Server.Logged);
+                    }
+                    connectedClients.Add(new Player(e.IpPort, messageData[1]));
 
                     break;
                 case Messages.Client.Register:
@@ -104,14 +111,13 @@ namespace TCPserver
         {
             Console.WriteLine($"Client disconnected {e.IpPort}");
             matches.RemoveAll(x => x.playerWhite == e.IpPort);
-            connectedClients.Remove(e.IpPort);       
+            connectedClients.RemoveAll(x => x.ip == e.IpPort);       
         }
 
         private static void Events_ClientConnected(object sender, ClientConnectedEventArgs e)
         {
             Console.WriteLine($"New client connected {e.IpPort}");
-            server.Send(e.IpPort, "Witaj");
-            connectedClients.Add(e.IpPort);           
+                
         }
 
         private static string listOfMatches()

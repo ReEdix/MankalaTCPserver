@@ -9,6 +9,7 @@
             public const string Move = "###__Move";
             public const string Start = "###__Start";
             public const string Matches = "###__Matches";
+            public const string Logged = "###__Logged";
         }
 
         public class Client
