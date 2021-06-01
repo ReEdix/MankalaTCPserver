@@ -13,6 +13,8 @@
             public const string Winner = "###__Winner";
             public const string SaveGame = "###__SaveGame";
             public const string Lost = "###__Lost";
+            public const string Registered = "###__Registered";
+            public const string User = "###_User";
         }
 
         public class Client

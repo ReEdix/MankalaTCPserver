@@ -11,7 +11,7 @@ namespace TCPserver
         public static List<Player> connectedClients = new List<Player>();
         public static List<Match> matches = new List<Match>();
         static SimpleTcpServer server = new SimpleTcpServer("127.0.0.1:8001");
-        public static MankalaDBDataContext db = new MankalaDBDataContext(@"Data Source = (LocalDB)\MSSQLLocalDB; AttachDbFilename = C:\Users\user\source\repos\MankalaTCPserver\databaseM.mdf; Integrated Security = True");
+        public static MankalaDBDataContext db = new MankalaDBDataContext($@"Data Source = (LocalDB)\MSSQLLocalDB; AttachDbFilename = {Environment.CurrentDirectory}\databaseM.mdf; Integrated Security = True");
         static void Main(string[] args)
         {         
             server.Events.ClientConnected += Events_ClientConnected;
@@ -19,6 +19,7 @@ namespace TCPserver
             server.Events.DataReceived += Events_DataReceived;
             server.Start();
             Console.WriteLine("Server wystartował ....");
+            Console.WriteLine(Environment.CurrentDirectory);
 
             string commandLine;
             while((commandLine = Console.ReadLine()) != "EXIT")
@@ -42,39 +43,39 @@ namespace TCPserver
             switch (messageData[0])
             {
                 case Messages.Client.Host:
-                    matches.Add(new Match(e.IpPort));
+                    matches.Add(new Match(connectedClients.Find(x => x.ip == e.IpPort)));
                     Console.WriteLine($"Gracz: {e.IpPort} stworzył nową gre");
                     break;
                 case Messages.Client.Join:
 
-                    string hostAdress = $"{messageData[1]}:{messageData[2]}";
+                    string hostAdress = messageData[1];
 
                     foreach (Match match in matches)
                     {
-                        if (match.playerWhite.Equals(hostAdress))
+                        if (match.playerWhite.name.Equals(hostAdress))
                         {
-                            match.playerBlack = e.IpPort;
-                            server.Send(match.playerWhite, Messages.Server.Start + ":WHITE");
-                            server.Send(match.playerBlack, Messages.Server.Start + ":BLACK");
+                            match.playerBlack = new Player(e.IpPort, hostAdress);
+                            server.Send(match.playerWhite.ip, Messages.Server.Start + ":WHITE");
+                            server.Send(match.playerBlack.ip, Messages.Server.Start + ":BLACK");
                             Console.WriteLine("Mecz wystartował");
                             break;
                         }
                     }
                     break;
                 case Messages.Client.Move:
-                    Match ourMatch = matches.Find(x => x.playerBlack == e.IpPort);
+                    Match ourMatch = matches.Find(x => x.playerBlack.ip == e.IpPort);
                     if(ourMatch == null)
                     {
-                        ourMatch = matches.Find(x => x.playerWhite == e.IpPort);
+                        ourMatch = matches.Find(x => x.playerWhite.ip == e.IpPort);
                     }
 
-                    if(e.IpPort == ourMatch.playerWhite)
+                    if(e.IpPort == ourMatch.playerWhite.ip)
                     {
-                        server.Send(ourMatch.playerBlack, Encoding.UTF8.GetString(e.Data));
+                        server.Send(ourMatch.playerBlack.ip, Encoding.UTF8.GetString(e.Data));
                     }
                     else
                     {
-                        server.Send(ourMatch.playerWhite, Encoding.UTF8.GetString(e.Data));
+                        server.Send(ourMatch.playerWhite.ip, Encoding.UTF8.GetString(e.Data));
                     }                  
                     break;
                 case Messages.Server.Matches:
@@ -82,7 +83,7 @@ namespace TCPserver
                     server.Send(e.IpPort, listOfMatches());
                     break;
                 case Messages.Client.Cancel:
-                    matches.RemoveAll(x => x.playerWhite == e.IpPort);
+                    matches.RemoveAll(x => x.playerWhite.ip == e.IpPort);
                     break;
                 case Messages.Client.Login:
                     if(!db.userLogin(messageData[1], messageData[2]))
@@ -96,26 +97,28 @@ namespace TCPserver
                         server.Send(e.IpPort, Messages.Server.Logged);
                     }
                     connectedClients.Add(new Player(e.IpPort, messageData[1]));
+    
+                    server.Send(e.IpPort,$"{Messages.Server.User}:{db.gameCount(messageData[1])}");
 
                     break;
                 case Messages.Client.Register:
                     addUser(Encoding.UTF8.GetString(e.Data));
-                    server.Send(e.IpPort, Messages.Server.Disconnect);
+                    server.Send(e.IpPort, Messages.Server.Registered);
                     break;
 
                 case Messages.Client.EndGame:  // endgame message + playercolor
-                    Match thisMatch = matches.Find(x => x.playerWhite == e.IpPort);
+                    Match thisMatch = matches.Find(x => x.playerWhite.ip == e.IpPort);
                     if (thisMatch == null)
                     {
-                        thisMatch = matches.Find(x => x.playerBlack == e.IpPort);
+                        thisMatch = matches.Find(x => x.playerBlack.ip == e.IpPort);
                     }
-                    Player thisPlayerWhite = connectedClients.Find(x => x.ip == thisMatch.playerWhite);
-                    Player thisPlayerBlack = connectedClients.Find(x => x.ip == thisMatch.playerBlack);
+                    Player thisPlayerWhite = connectedClients.Find(x => x.ip == thisMatch.playerWhite.ip);
+                    Player thisPlayerBlack = connectedClients.Find(x => x.ip == thisMatch.playerBlack.ip);
                     if (messageData[1] == "BLACK")
                     {
                         server.Send(e.IpPort, Messages.Server.Winner + ":" + thisPlayerWhite.name + ":" +
                             thisPlayerBlack.name + ":" + thisPlayerBlack.name);
-                        server.Send(thisMatch.playerWhite, Messages.Server.Lost + ":" + thisPlayerBlack.name);
+                        server.Send(thisMatch.playerWhite.ip, Messages.Server.Lost + ":" + thisPlayerBlack.name);
 
                     }
                     else
@@ -123,7 +126,7 @@ namespace TCPserver
                         server.Send(e.IpPort, Messages.Server.Winner + ":" + thisPlayerWhite.name + ":" +
                             thisPlayerBlack.name + ":" + thisPlayerWhite.name);
                         // do kogo, imie wygranego
-                        server.Send(thisMatch.playerBlack, Messages.Server.Lost + ":" + thisPlayerWhite.name);
+                        server.Send(thisMatch.playerBlack.ip, Messages.Server.Lost + ":" + thisPlayerWhite.name);
                     }
                     break;
 
@@ -142,7 +145,7 @@ namespace TCPserver
         private static void Events_ClientDisconnected(object sender, ClientDisconnectedEventArgs e)
         {
             Console.WriteLine($"Client disconnected {e.IpPort}");
-            matches.RemoveAll(x => x.playerWhite == e.IpPort);
+            matches.RemoveAll(x => x.playerWhite.ip == e.IpPort);
             connectedClients.RemoveAll(x => x.ip == e.IpPort);       
         }
 
@@ -161,7 +164,7 @@ namespace TCPserver
             {
                 if (match.playerBlack == null)
                 {
-                    listOfMatches.Append($":{match.playerWhite}");
+                    listOfMatches.Append($":{match.playerWhite.name}");
                 }
             }
 
@@ -234,5 +237,7 @@ namespace TCPserver
                 Console.ReadLine();
             }
         }
+
+
     }
 }

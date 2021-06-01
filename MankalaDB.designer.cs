@@ -82,6 +82,31 @@ namespace TCPserver
         {
 			return Users.Any(x => ( x.name.Equals(nick) && x.password.Equals(password) ));			
         }
+		public String gameCount(String gameData)
+		{
+			// name
+			int personId = 0, gameCountWin = 0, gameCountLost = 0;
+			foreach (User u in Users)
+			{
+				if (u.name == gameData)
+				{
+					personId = u.Id;
+				}
+			}
+			foreach (Game g in Games)
+			{
+				if ( g.winner == personId)
+				{
+					gameCountWin++;
+				}
+				else if(g.player1 == personId || g.player2 == personId)
+				{
+					gameCountLost++;
+				}
+			}
+			
+			return gameCountWin.ToString() + ":" + gameCountLost;
+		}
 	}
 	
 	[global::System.Data.Linq.Mapping.TableAttribute(Name="dbo.Game")]

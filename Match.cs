@@ -2,10 +2,10 @@
 {
     class Match
     {
-        public string playerWhite;
-        public string playerBlack;
+        public Player playerWhite;
+        public Player playerBlack;
 
-        public Match(string playerWhite)
+        public Match(Player playerWhite)
         {
             this.playerWhite = playerWhite;
             this.playerBlack = null;
