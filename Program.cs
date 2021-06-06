@@ -45,22 +45,23 @@ namespace TCPserver
                 case Messages.Client.Host:
                     matches.Add(new Match(connectedClients.Find(x => x.ip == e.IpPort)));
                     Console.WriteLine($"Gracz: {e.IpPort} stworzył nową gre");
+                    SendMatchesToAll();
                     break;
                 case Messages.Client.Join:
-
                     string hostAdress = messageData[1];
-
                     foreach (Match match in matches)
                     {
-                        if (match.playerWhite.name.Equals(hostAdress))
+                        if (match.playerWhite.name.Equals(hostAdress) && match.playerBlack == null)
                         {
                             match.playerBlack = new Player(e.IpPort, hostAdress);
                             server.Send(match.playerWhite.ip, Messages.Server.Start + ":WHITE");
                             server.Send(match.playerBlack.ip, Messages.Server.Start + ":BLACK");
                             Console.WriteLine("Mecz wystartował");
+                            SendMatchesToAll();
                             break;
                         }
                     }
+
                     break;
                 case Messages.Client.Move:
                     Match ourMatch = matches.Find(x => x.playerBlack.ip == e.IpPort);
@@ -84,6 +85,7 @@ namespace TCPserver
                     break;
                 case Messages.Client.Cancel:
                     matches.RemoveAll(x => x.playerWhite.ip == e.IpPort);
+                    SendMatchesToAll();
                     break;
                 case Messages.Client.Login:
                     if(!db.userLogin(messageData[1], messageData[2]))
@@ -91,15 +93,12 @@ namespace TCPserver
                         server.Send(e.IpPort, Messages.Server.Disconnect);
                         break;
                     }
-
                     if(connectedClients.Exists(x => x.name == messageData[1]))
                     {
                         server.Send(e.IpPort, Messages.Server.Logged);
                     }
                     connectedClients.Add(new Player(e.IpPort, messageData[1]));
-    
                     server.Send(e.IpPort,$"{Messages.Server.User}:{db.gameCount(messageData[1])}");
-
                     break;
                 case Messages.Client.Register:
                     addUser(Encoding.UTF8.GetString(e.Data));
@@ -128,6 +127,7 @@ namespace TCPserver
                         // do kogo, imie wygranego
                         server.Send(thisMatch.playerBlack.ip, Messages.Server.Lost + ":" + thisPlayerWhite.name);
                     }
+                    
                     break;
 
                 case Messages.Client.SaveGame:
@@ -135,6 +135,7 @@ namespace TCPserver
                     Player thisPlayer2 = connectedClients.Find(x => x.name == messageData[2]);
                     Player thisPlayer3 = connectedClients.Find(x => x.name == messageData[3]);
                     addGame(thisPlayer1.name + ":"+ thisPlayer2.name + ":"+ thisPlayer3.name);
+                    SendMatchesToAll();
                     break;
 
                 default:
@@ -235,6 +236,22 @@ namespace TCPserver
                 Console.WriteLine("Can't submit changes in database - game");
                 Console.WriteLine(e.Message);
                 Console.ReadLine();
+            }
+        }
+
+        private static void SendMatchesToAll()
+        {
+            foreach (Player player in connectedClients)
+            {
+                if (!matches.Any(x => x.playerWhite.ip.Equals(player.ip) && x.playerBlack != null))
+                {
+                    server.Send(player.ip, listOfMatches());
+                    continue;
+                }
+                if (matches.Where(x => x.playerBlack != null).Any(x => x.playerBlack.ip.Equals(player.ip)))
+                {
+                    server.Send(player.ip, listOfMatches());
+                }
             }
         }
 
