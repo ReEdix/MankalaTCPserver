@@ -47,13 +47,14 @@ namespace TCPserver
                     Console.WriteLine($"Gracz: {e.IpPort} stworzył nową gre");
                     SendMatchesToAll();
                     break;
+
                 case Messages.Client.Join:
                     string hostAdress = messageData[1];
                     foreach (Match match in matches)
                     {
                         if (match.playerWhite.name.Equals(hostAdress) && match.playerBlack == null)
                         {
-                            match.playerBlack = new Player(e.IpPort, hostAdress);
+                            match.playerBlack = new Player(e.IpPort, connectedClients.Find(x => x.ip == e.IpPort).name);
                             server.Send(match.playerWhite.ip, Messages.Server.Start + ":WHITE");
                             server.Send(match.playerBlack.ip, Messages.Server.Start + ":BLACK");
                             Console.WriteLine("Mecz wystartował");
@@ -63,6 +64,7 @@ namespace TCPserver
                     }
 
                     break;
+
                 case Messages.Client.Move:
                     Match ourMatch = matches.Find(x => x.playerBlack.ip == e.IpPort);
                     if(ourMatch == null)
@@ -79,14 +81,17 @@ namespace TCPserver
                         server.Send(ourMatch.playerWhite.ip, Encoding.UTF8.GetString(e.Data));
                     }                  
                     break;
+
                 case Messages.Server.Matches:
                     Console.WriteLine(listOfMatches());
                     server.Send(e.IpPort, listOfMatches());
                     break;
+
                 case Messages.Client.Cancel:
                     matches.RemoveAll(x => x.playerWhite.ip == e.IpPort);
                     SendMatchesToAll();
                     break;
+
                 case Messages.Client.Login:
                     if(!db.userLogin(messageData[1], messageData[2]))
                     {
@@ -118,7 +123,6 @@ namespace TCPserver
                         server.Send(e.IpPort, Messages.Server.Winner + ":" + thisPlayerWhite.name + ":" +
                             thisPlayerBlack.name + ":" + thisPlayerBlack.name);
                         server.Send(thisMatch.playerWhite.ip, Messages.Server.Lost + ":" + thisPlayerBlack.name);
-
                     }
                     else
                     {
@@ -126,8 +130,7 @@ namespace TCPserver
                             thisPlayerBlack.name + ":" + thisPlayerWhite.name);
                         // do kogo, imie wygranego
                         server.Send(thisMatch.playerBlack.ip, Messages.Server.Lost + ":" + thisPlayerWhite.name);
-                    }
-                    
+                    }                 
                     break;
 
                 case Messages.Client.SaveGame:
@@ -135,7 +138,28 @@ namespace TCPserver
                     Player thisPlayer2 = connectedClients.Find(x => x.name == messageData[2]);
                     Player thisPlayer3 = connectedClients.Find(x => x.name == messageData[3]);
                     addGame(thisPlayer1.name + ":"+ thisPlayer2.name + ":"+ thisPlayer3.name);
-                    SendMatchesToAll();
+                   
+                    break;
+                case Messages.Client.Surrender:
+                    Match surrenderMatch = matches.Find(x => x.playerWhite.ip == e.IpPort);
+                    if (surrenderMatch == null)
+                    {
+                        surrenderMatch = matches.Find(x => x.playerBlack.ip == e.IpPort);
+                    }
+                    Console.WriteLine($"{surrenderMatch.playerBlack.ip}:{surrenderMatch.playerWhite.ip}");
+                    if (e.IpPort.Equals(surrenderMatch.playerBlack.ip))
+                    {
+                        server.Send(surrenderMatch.playerBlack.ip, $"{Messages.Server.Winner}:{surrenderMatch.playerBlack.name}:" +
+                            $"{surrenderMatch.playerWhite.name}:{surrenderMatch.playerBlack.name}");
+                        
+                        server.Send(surrenderMatch.playerWhite.ip, $"{Messages.Server.Lost}:{surrenderMatch.playerBlack.name}");
+                    }
+                    else
+                    {
+                        server.Send(surrenderMatch.playerWhite.ip, $"{Messages.Server.Winner}:{surrenderMatch.playerWhite.name}" +
+                            $":{surrenderMatch.playerBlack.name}:{surrenderMatch.playerWhite.name}");
+                        server.Send(surrenderMatch.playerBlack.ip, $"{Messages.Server.Lost}:{surrenderMatch.playerWhite.name}");
+                    }
                     break;
 
                 default:
@@ -160,6 +184,11 @@ namespace TCPserver
         {
             StringBuilder listOfMatches = new StringBuilder();
             listOfMatches.Append(Messages.Server.Matches);
+
+            if(listOfMatches.Length == 0)
+            {
+                return null;
+            }
 
             foreach(Match match in matches)
             {
@@ -203,7 +232,8 @@ namespace TCPserver
             String[] substring = gameData.Split(':');
             int p1 = 0, p2 = 0, w = 0;
 
-            foreach(User u in db.Users)
+            
+            foreach (User u in db.Users)
             {
                 if (u.name == substring[0])
                 {

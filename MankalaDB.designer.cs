@@ -105,7 +105,7 @@ namespace TCPserver
 				}
 			}
 			
-			return gameCountWin.ToString() + ":" + gameCountLost;
+			return gameCountWin.ToString() + ":" + gameCountLost.ToString();
 		}
 	}
 	

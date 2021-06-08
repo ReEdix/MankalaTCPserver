@@ -28,6 +28,7 @@
             public const string Register = "###__Register";
             public const string EndGame = "###__EndGame";
             public const string SaveGame = "###__SaveGame";
+            public const string Surrender = "###__Surrender";
         }
     }
 }
